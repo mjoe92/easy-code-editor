@@ -1,14 +1,15 @@
 export function applyEditorThemes() {
   const isDark = document.body.getAttribute('data-theme') === 'dark';
 
-  document.querySelectorAll('code-editor, java-editor, javascript-editor').forEach((editor) => {
+  let editors = document.querySelectorAll('code-editor, java-editor, javascript-editor');
+  for (const editor of editors) {
     const textSrc = editor.getAttribute('textSrc');
     const isConstantThemeExample = textSrc === '7-theme/right.js';
     if (isConstantThemeExample) {
-      return;
+      continue;
     }
 
     const path = isDark ? 'dark-theme.json' : null;
     editor.updateThemeFrom && editor.updateThemeFrom(path);
-  });
+  }
 }
