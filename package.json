@@ -1,27 +1,34 @@
 {
-  "name": "@mjoe92/web-code-editor",
+  "name": "@mjoe92/easy-code-editor",
   "version": "1.0.0",
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/artifacts/web-code-editor.js",
-      "types": "./dist/artifacts/component/main.d.ts"
+      "types": "./dist/artifacts/component/main.d.ts",
+      "import": "./dist/artifacts/easy-code-editor.js"
     },
     "./react": {
-      "import": "./dist/artifacts/web-code-editor-react.js",
-      "types": "./dist/artifacts/react/index.d.ts"
+      "types": "./dist/artifacts/component/language/react/index.d.ts",
+      "import": "./dist/artifacts/easy-code-editor-react.js"
     },
     "./vue": {
-      "import": "./dist/artifacts/web-code-editor-vue.js",
-      "types": "./dist/artifacts/vue/index.d.ts"
+      "types": "./dist/artifacts/component/language/vue/index.d.ts",
+      "import": "./dist/artifacts/easy-code-editor-vue.js"
     },
     "./angular": {
-      "import": "./dist/artifacts/web-code-editor-angular.js",
-      "types": "./dist/artifacts/angular/index.d.ts"
+      "types": "./dist/artifacts/component/language/angular/index.d.ts",
+      "import": "./dist/artifacts/easy-code-editor-angular.js"
     }
   },
-  "main": "./dist/artifacts/web-code-editor.js",
-  "module": "./dist/artifacts/web-code-editor.js",
+  "typesVersions": {
+    "*": {
+      "react": ["./dist/artifacts/component/language/react/index.d.ts"],
+      "vue": ["./dist/artifacts/component/language/vue/index.d.ts"],
+      "angular": ["./dist/artifacts/component/language/angular/index.d.ts"]
+    }
+  },
+  "main": "./dist/artifacts/easy-code-editor.js",
+  "module": "./dist/artifacts/easy-code-editor.js",
   "types": "./dist/artifacts/component/main.d.ts",
   "files": [
     "dist/artifacts/"
@@ -33,10 +40,18 @@
     "@angular/forms": ">=17"
   },
   "peerDependenciesMeta": {
-    "react": { "optional": true },
-    "vue": { "optional": true },
-    "@angular/core": { "optional": true },
-    "@angular/forms": { "optional": true }
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "@angular/core": {
+      "optional": true
+    },
+    "@angular/forms": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.7",
@@ -76,6 +91,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mjoe92/web-code-editor.git"
+    "url": "https://github.com/mjoe92/easy-code-editor.git"
   }
 }

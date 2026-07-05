@@ -1,9 +1,9 @@
-import {EditorView, highlightActiveLineGutter, keymap, lineNumbers, Decoration, DecorationSet} from "@codemirror/view";
-import {EditorState, Extension, Compartment, Transaction, StateField} from "@codemirror/state";
+import {Decoration, DecorationSet, EditorView, highlightActiveLineGutter, keymap, lineNumbers} from "@codemirror/view";
+import {Annotation, Compartment, EditorState, Extension, StateField, Transaction} from "@codemirror/state";
 import {autocompletion, Completion, CompletionContext, CompletionResult} from "@codemirror/autocomplete";
 import {HighlightStyle, LanguageSupport, syntaxHighlighting, TagStyle} from "@codemirror/language";
 import {tags} from "@lezer/highlight";
-import {history, defaultKeymap, historyKeymap, indentWithTab} from "@codemirror/commands";
+import {defaultKeymap, history, historyKeymap, indentWithTab} from "@codemirror/commands";
 
 export interface Label {
   class?: string[],
@@ -16,6 +16,7 @@ export interface Label {
 
 export interface LanguageHighlightStyle {
   tag: string,
+
   [key: string]: any
 }
 
@@ -26,6 +27,7 @@ interface FrozenRange {
 }
 
 const FROZEN_LINE_CLASS = 'cm-frozen-line';
+const setProgrammatic = Annotation.define<boolean>();
 
 export default class CodeEditor extends HTMLElement {
   private readonly editorContainer: HTMLDivElement;
@@ -33,10 +35,7 @@ export default class CodeEditor extends HTMLElement {
   private editorView?: EditorView;
   private readonly baseThemeCompartment = new Compartment();
   private readonly dynamicThemeCompartment = new Compartment();
-
-  static get observedAttributes() {
-    return ['title', 'editor-class'];
-  }
+  private readonly frozenLinesCompartment = new Compartment();
 
   constructor(private labels?: Label, private language?: LanguageSupport) {
     super();
@@ -49,8 +48,12 @@ export default class CodeEditor extends HTMLElement {
     this.editorContainer = document.createElement('div');
     this.editorContainer.className = 'code-editor';
 
-    const shadow = this.attachShadow({ mode: 'open' });
+    const shadow = this.attachShadow({mode: 'open'});
     shadow.append(this.header, this.editorContainer);
+  }
+
+  static get observedAttributes() {
+    return ['title', 'editor-class', 'frozenLines'];
   }
 
   connectedCallback(): void {
@@ -71,6 +74,11 @@ export default class CodeEditor extends HTMLElement {
       case "editor-class":
         this.initEditor();
         return;
+      case "frozenLines":
+        if (oldValue !== newValue) {
+          this.applyFrozenLines();
+        }
+        return;
     }
   }
 
@@ -80,7 +88,6 @@ export default class CodeEditor extends HTMLElement {
 
   public setValue(value: string): void {
     if (!this.editorView) {
-      this.textContent = value;
       return;
     }
 
@@ -89,7 +96,8 @@ export default class CodeEditor extends HTMLElement {
         from: 0,
         to: this.editorView.state.doc.length,
         insert: value
-      }
+      },
+      annotations: [setProgrammatic.of(true)]
     });
   }
 
@@ -102,6 +110,32 @@ export default class CodeEditor extends HTMLElement {
     this.editorContainer.className = className;
   }
 
+  public async updateThemeFrom(url: string | null, dark = false): Promise<void> {
+    if (!this.editorView) {
+      return;
+    }
+
+    if (!url) {
+      this.editorView.dispatch({
+        effects: this.dynamicThemeCompartment.reconfigure([])
+      });
+      return;
+    }
+
+    const content = await fetch(url);
+    const ct = content.headers.get("content-type");
+    if (ct?.includes("html")) {
+      throw new ReferenceError(`Wrong theme reference or corrupt content while reading the file: ${url}`);
+    }
+
+    const themeJson = await content.text();
+    const themeExtension = this.createTheme(themeJson, dark) ?? [];
+
+    this.editorView.dispatch({
+      effects: this.dynamicThemeCompartment.reconfigure(themeExtension)
+    });
+  }
+
   private initEditor(): void {
     if (this.editorView) {
       return;
@@ -112,7 +146,10 @@ export default class CodeEditor extends HTMLElement {
       this.readFile("autoCompletionSrc"),
       this.readFile("highlightSrc"),
       this.readFile("themeSrc")
-    ]).then(contents => this.createEditor(contents));
+    ]).then(contents => {
+      this.createEditor(contents);
+      this.dispatchEvent(new CustomEvent('editor-ready', {bubbles: true, composed: true}));
+    });
   }
 
   private readFile = async (fileSourceAttribute: string) => {
@@ -139,6 +176,22 @@ export default class CodeEditor extends HTMLElement {
     return attr.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n > 0);
   }
 
+  private applyFrozenLines(): void {
+    if (!this.editorView) {
+      return;
+    }
+
+    const frozenLineNumbers = this.parseFrozenLines();
+    const doc = this.editorView.state.doc;
+    const ext = frozenLineNumbers.length > 0
+      ? this.freezeLines(frozenLineNumbers, doc.toString())
+      : [];
+
+    this.editorView.dispatch({
+      effects: this.frozenLinesCompartment.reconfigure(ext)
+    });
+  }
+
   private createEditor(contents: (string | undefined)[]) {
     const baseThemeExtension = this.createTheme(contents[3]);
 
@@ -153,6 +206,12 @@ export default class CodeEditor extends HTMLElement {
       ]),
       this.baseThemeCompartment.of(baseThemeExtension ?? []),
       this.dynamicThemeCompartment.of([]),
+      this.frozenLinesCompartment.of([]),
+      EditorView.updateListener.of(update => {
+        if (update.docChanged) {
+          this.dispatchEvent(new Event('change', {bubbles: true, composed: true}));
+        }
+      }),
     ];
 
     if (this.language) {
@@ -163,13 +222,7 @@ export default class CodeEditor extends HTMLElement {
     this.addExtension(extensions, contents[2], this.createHighlight);
     this.addExtension(extensions, this.hasAttribute("freeze"), this.freezeEditor);
 
-    const frozenLineNumbers = this.parseFrozenLines();
     const initContent = this.createContent(contents[0]);
-
-    if (frozenLineNumbers.length > 0) {
-      const freezeLinesExt = this.freezeLines(frozenLineNumbers, initContent);
-      extensions.push(freezeLinesExt);
-    }
 
     this.editorView = new EditorView({
       state: EditorState.create({
@@ -178,32 +231,8 @@ export default class CodeEditor extends HTMLElement {
       }),
       parent: this.editorContainer,
     });
-  }
 
-  public async updateThemeFrom(url: string | null): Promise<void> {
-    if (!this.editorView) {
-      return;
-    }
-
-    if (!url) {
-      this.editorView.dispatch({
-        effects: this.dynamicThemeCompartment.reconfigure([])
-      });
-      return;
-    }
-
-    const content = await fetch(url);
-    const ct = content.headers.get("content-type");
-    if (ct?.includes("html")) {
-      throw new ReferenceError(`Wrong theme reference or corrupt content while reading the file: ${url}`);
-    }
-
-    const themeJson = await content.text();
-    const themeExtension = this.createTheme(themeJson) ?? [];
-
-    this.editorView.dispatch({
-      effects: this.dynamicThemeCompartment.reconfigure(themeExtension)
-    });
+    this.applyFrozenLines();
   }
 
   private createAutoCompletion(completeDefinition?: string): Extension {
@@ -221,7 +250,7 @@ export default class CodeEditor extends HTMLElement {
   }
 
   private definitionComplete = (label: Label) => Object.entries(label)
-    .flatMap(([type, labels]) => labels.map((label: string) => ({label, type})));
+  .flatMap(([type, labels]) => labels.map((label: string) => ({label, type})));
 
   private createHighlight(highlightStyles?: string): Extension | undefined {
     if (!highlightStyles) {
@@ -247,12 +276,12 @@ export default class CodeEditor extends HTMLElement {
     return (tags as any)[tagString];
   }
 
-  private createTheme(theme?: string) {
+  private createTheme(theme?: string, dark = false) {
     if (!theme) {
       return;
     }
 
-    return EditorView.theme(JSON.parse(theme));
+    return EditorView.theme(JSON.parse(theme), {dark});
   }
 
   private async autoComplete(context: CompletionContext, autoCompletionOptions: Completion[]): Promise<CompletionResult> {
@@ -286,31 +315,29 @@ export default class CodeEditor extends HTMLElement {
   }
 
   private freezeLines(frozenLineNumbers: number[], initContent: string): Extension {
-    const initDoc = EditorState.create({ doc: initContent }).doc;
+    const initDoc = EditorState.create({doc: initContent}).doc;
     const initRanges: FrozenRange[] = [];
 
-    for (let lineNumber of frozenLineNumbers) {
+    for (const lineNumber of frozenLineNumbers) {
       if (lineNumber >= 1 && lineNumber <= initDoc.lines) {
         const line = initDoc.line(lineNumber);
-
         initRanges.push({
-          from:     line.from,
-          to:       line.to,
+          from: line.from,
+          to: line.to,
           lineFrom: line.from,
         });
       }
     }
 
+    // Tracks the current character positions of every frozen line.
+    // mapPos shifts them correctly whenever lines are inserted or removed.
     const frozenRangesField = StateField.define<FrozenRange[]>({
       create: () => initRanges,
       update(ranges, tr) {
-        if (!tr.docChanged) {
-          return ranges;
-        }
-
-        return ranges.map(({ from, to, lineFrom }) => ({
-          from:     tr.changes.mapPos(from,     -1),
-          to:       tr.changes.mapPos(to,        1),
+        if (!tr.docChanged) return ranges;
+        return ranges.map(({from, to, lineFrom}) => ({
+          from: tr.changes.mapPos(from, -1),
+          to: tr.changes.mapPos(to, 1),
           lineFrom: tr.changes.mapPos(lineFrom, -1),
         }));
       },
@@ -319,56 +346,41 @@ export default class CodeEditor extends HTMLElement {
     const decorationField = StateField.define<DecorationSet>({
       create(state) {
         const ranges = state.field(frozenRangesField);
-
         return Decoration.set(
-          ranges.map(r => Decoration.line({ class: FROZEN_LINE_CLASS }).range(r.lineFrom))
+          ranges.map(r => Decoration.line({class: FROZEN_LINE_CLASS}).range(r.lineFrom))
         );
       },
       update(deco, tr) {
-        if (!tr.docChanged) {
-          return deco;
-        }
-
+        if (!tr.docChanged) return deco;
         const ranges = tr.state.field(frozenRangesField);
-
         return Decoration.set(
-          ranges.map(r => Decoration.line({ class: FROZEN_LINE_CLASS }).range(r.lineFrom))
+          ranges.map(r => Decoration.line({class: FROZEN_LINE_CLASS}).range(r.lineFrom))
         );
       },
       provide: f => EditorView.decorations.from(f),
     });
 
+    // The filter reads live positions from frozenRangesField on tr.startState
+    // so protection always follows the actual frozen content, even after
+    // lines are inserted or removed above them.
     const filter = EditorState.transactionFilter.of((tr: Transaction) => {
-      if (!tr.docChanged) {
-        return tr;
-      }
+      if (!tr.docChanged) return tr;
+      if (tr.annotation(setProgrammatic)) return tr;
 
       const frozenRanges = tr.startState.field(frozenRangesField);
+
       let blocked = false;
-
       tr.changes.iterChangedRanges((fromA, toA) => {
-        if (blocked) {
-          return;
-        }
-
+        if (blocked) return;
         for (const range of frozenRanges) {
-          const extendedFrom = range.from - 1;
-          const extendedTo   = range.to + 1;
-
-          const overlapsExtended = fromA < extendedTo && toA > extendedFrom;
-
-          if (overlapsExtended) {
+          if (fromA <= range.to && toA >= range.from) {
             blocked = true;
             break;
           }
         }
       });
 
-      if (blocked) {
-        return [];
-      }
-
-      return tr;
+      return blocked ? [] : tr;
     });
 
     return [frozenRangesField, decorationField, filter];

@@ -1,5 +1,5 @@
 import { defineComponent, h, onMounted, onUnmounted, ref, watch, PropType } from 'vue';
-import '../component/main';
+import '../../../main';
 
 type EditorElement = HTMLElement & {
   getValue(): string;
@@ -14,6 +14,11 @@ function createWrapper(tagName: string, displayName: string) {
       title: { type: String as PropType<string>, default: '' },
       freeze: { type: Boolean as PropType<boolean>, default: false },
       editorClass: { type: String as PropType<string>, default: undefined },
+      textSrc: { type: String as PropType<string>, default: undefined },
+      autoCompletionSrc: { type: String as PropType<string>, default: undefined },
+      highlightSrc: { type: String as PropType<string>, default: undefined },
+      themeSrc: { type: String as PropType<string>, default: undefined },
+      frozenLines: { type: Array as PropType<number[]>, default: () => [] },
     },
     emits: ['update:modelValue'],
     setup(props, { emit, expose }) {
@@ -56,6 +61,11 @@ function createWrapper(tagName: string, displayName: string) {
           title: props.title,
           freeze: props.freeze ? '' : undefined,
           'editor-class': props.editorClass,
+          textSrc: props.textSrc,
+          autoCompletionSrc: props.autoCompletionSrc,
+          highlightSrc: props.highlightSrc,
+          themeSrc: props.themeSrc,
+          frozenLines: props.frozenLines && props.frozenLines.length > 0 ? props.frozenLines.join(',') : undefined,
         });
     },
   });

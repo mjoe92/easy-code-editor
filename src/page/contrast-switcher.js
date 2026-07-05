@@ -5,16 +5,16 @@ const currentTheme = prefersDark ? 'dark' : 'light';
 
 document.body.setAttribute('data-theme', currentTheme);
 
-import { applyEditorThemes } from './theme-applier.js';
+import { applyEditorTheme, applyEditorThemes } from './theme-applier.js';
 
-// Apply once after full page load so editors are ready
-if (document.readyState === 'complete') {
+document.addEventListener('editor-ready', (event) => {
+  applyEditorTheme(event.target);
+});
+
+// Also apply to any editors that already fired editor-ready before this listener was attached
+window.addEventListener('load', () => {
   applyEditorThemes();
-} else {
-  window.addEventListener('load', () => {
-    applyEditorThemes();
-  });
-}
+});
 
 document.getElementById('contrast-switcher')?.addEventListener('click', () => {
   const nextTheme = document.body.getAttribute('data-theme') === 'dark' ? '' : 'dark';

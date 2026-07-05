@@ -8,8 +8,8 @@
   },
   "include": [
     "src/component/**/*",
-    "src/react/**/*",
-    "src/vue/**/*",
-    "src/angular/**/*"
+    "src/component/language/react/**/*",
+    "src/component/language/vue/**/*",
+    "src/component/language/angular/**/*"
   ]
 }

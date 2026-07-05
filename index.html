@@ -2,82 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  
+
   <title>My CodeMirror Web Component Demo</title>
-  
-  <script type="module" src="src/component/main.ts"></script>
+
+  <script type="module" src="src/main.ts"></script>
   <script type="module" src="src/page/editor-renderer.ts"></script>
   <script type="module" src="src/page/contrast-switcher.js"></script>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
 </head>
-  <body>
-    <h1>Web Code Editor Usage</h1>
-    <button class="contrast-switcher" id="contrast-switcher" type="button">
-      <img class="contrast-icon" src="/moon-solid-full.svg" alt="Toggle contrast">
-    </button>
-    <h3>To add inner text</h3>
-    <div class="editor-pair">
-      <code-editor class="column" title="index.html" textSrc="1-value/left.txt" freeze></code-editor>
-      <code-editor class="column">The text written in inner HTML will be shown here!</code-editor>
-    </div>
-    
-    <h3>To freeze the editor</h3>
-    <div class="editor-pair">
-      <code-editor class="column" title="index.html" textSrc="2-freeze/left.txt" freeze></code-editor>
-      <code-editor class="column" freeze>The non-editable text written in inner HTML will be shown here!</code-editor>
-    </div>
-    
-    <h3>To name the title of editor</h3>
-    <div class="editor-pair">
-      <div class="column">
-        <code-editor title="index.html" textSrc="3-title/left.txt" freeze></code-editor>
-        <code-editor title="style.css" textSrc="3-title/style.css" freeze></code-editor>
-      </div>
-      <code-editor class="column" title="A titled code editor">The code editor with a title on header!</code-editor>
-    </div>
-    
-    <h3>To show text with file import</h3>
-    <div class="editor-pair">
-      <code-editor class="column" title="index.html" textSrc="4-init/left.txt" freeze></code-editor>
-      <code-editor class="column" textSrc="4-init/right.js"></code-editor>
-    </div>
-    
-    <h3>To adjust for auto-completion</h3>
-    <div class="editor-pair">
-      <div class="column">
-        <code-editor title="index.html" textSrc="5-completion/left.txt" freeze></code-editor>
-        <code-editor title="labels.json" textSrc="5-completion/left-labels.json" freeze></code-editor>
-      </div>
-      <code-editor class="column" textSrc="5-completion/right.js" autoCompletionSrc="5-completion/left-labels.json"></code-editor>
-    </div>
+<body>
+<h1>Web Code Editor Usage</h1>
+<button class="contrast-switcher" id="contrast-switcher" type="button">
+  <img class="contrast-icon" src="/moon-solid-full.svg" alt="Toggle contrast">
+</button>
+<h3>To add inner text</h3>
+<div class="editor-pair">
+  <code-editor class="column" title="index.html" textSrc="1-value/left.txt" freeze></code-editor>
+  <code-editor class="column">The text written in inner HTML will be shown here!</code-editor>
+</div>
 
-    <h3>To highlight words</h3>
-    <div class="editor-pair">
-      <div class="column">
-        <code-editor title="index.html" textSrc="6-highlight/left.txt" freeze></code-editor>
-        <code-editor title="highlight.json" textSrc="6-highlight/highlight.json" freeze></code-editor>
-      </div>
-      <code-editor class="column" textSrc="6-highlight/right.js" highlightSrc="6-highlight/highlight.json"></code-editor>
-    </div>
+<h3>To freeze the editor</h3>
+<div class="editor-pair">
+  <code-editor class="column" title="index.html" textSrc="2-freeze/left.txt" freeze></code-editor>
+  <code-editor class="column" freeze>The non-editable text written in inner HTML will be shown here!</code-editor>
+</div>
 
-    <h3>To add constant theme for styling</h3>
-    <div class="editor-pair">
-      <div class="column">
-        <code-editor title="index.html" textSrc="7-theme/left.txt" freeze></code-editor>
-        <code-editor title="theme.json" textSrc="7-theme/theme.json" freeze></code-editor>
-      </div>
-      <code-editor class="column" textSrc="7-theme/right.js" themeSrc="7-theme/theme.json"></code-editor>
-    </div>
+<h3>To name the title of editor</h3>
+<div class="editor-pair">
+  <div class="column">
+    <code-editor title="index.html" textSrc="3-title/left.txt" freeze></code-editor>
+    <code-editor title="style.css" textSrc="3-title/style.css" freeze></code-editor>
+  </div>
+  <code-editor class="column" title="A titled code editor">The code editor with a title on header!</code-editor>
+</div>
 
-    <h3>To freeze specific lines</h3>
-    <div class="editor-pair">
-      <code-editor class="column" title="index.html" textSrc="8-frozen-lines/left.txt" freeze></code-editor>
-      <code-editor class="column" textSrc="8-frozen-lines/right.js" frozenLines="1,2,5,14,17"></code-editor>
-    </div>
+<h3>To show text with file import</h3>
+<div class="editor-pair">
+  <code-editor class="column" title="index.html" textSrc="4-init/left.txt" freeze></code-editor>
+  <code-editor class="column" textSrc="4-init/right.js"></code-editor>
+</div>
 
-    <h2>Language based editor</h2>
-    <select id="editor-select"></select>
-    <div id="editor-area"></div>
-  </body>
+<h3>To adjust for auto-completion</h3>
+<div class="editor-pair">
+  <div class="column">
+    <code-editor title="index.html" textSrc="5-completion/left.txt" freeze></code-editor>
+    <code-editor title="labels.json" textSrc="5-completion/left-labels.json" freeze></code-editor>
+  </div>
+  <code-editor class="column" textSrc="5-completion/right.js"
+               autoCompletionSrc="5-completion/left-labels.json"></code-editor>
+</div>
+
+<h3>To highlight words</h3>
+<div class="editor-pair">
+  <div class="column">
+    <code-editor title="index.html" textSrc="6-highlight/left.txt" freeze></code-editor>
+    <code-editor title="highlight.json" textSrc="6-highlight/highlight.json" freeze></code-editor>
+  </div>
+  <code-editor class="column" textSrc="6-highlight/right.js" highlightSrc="6-highlight/highlight.json"></code-editor>
+</div>
+
+<h3>To add constant theme for styling</h3>
+<div class="editor-pair">
+  <div class="column">
+    <code-editor title="index.html" textSrc="7-theme/left.txt" freeze></code-editor>
+    <code-editor title="theme.json" textSrc="7-theme/theme.json" freeze></code-editor>
+  </div>
+  <code-editor class="column" textSrc="7-theme/right.js" themeSrc="7-theme/theme.json"></code-editor>
+</div>
+
+<h3>To freeze specific lines</h3>
+<div class="editor-pair">
+  <code-editor class="column" title="index.html" textSrc="8-frozen-lines/left.txt" freeze></code-editor>
+  <code-editor class="column" textSrc="8-frozen-lines/right.js" frozenLines="1,2,5,14,17"></code-editor>
+</div>
+
+<h2>Language based editor</h2>
+<select id="editor-select"></select>
+<div id="editor-area"></div>
+</body>
 </html>

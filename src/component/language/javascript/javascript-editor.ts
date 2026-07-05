@@ -1,4 +1,4 @@
-import CodeEditor from "../code-editor";
+import CodeEditor from "../../code-editor";
 
 import {javascript} from "@codemirror/lang-javascript";
 import labels from "./javascript-label.json";

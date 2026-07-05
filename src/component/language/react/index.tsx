@@ -1,5 +1,5 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import '../component/main';
+import '../../../main';
 
 export interface CodeEditorHandle {
   getValue(): string;
@@ -14,13 +14,17 @@ interface CodeEditorProps {
   frozenLines?: number[];
   className?: string;
   style?: React.CSSProperties;
+  textSrc?: string;
+  autoCompletionSrc?: string;
+  highlightSrc?: string;
+  themeSrc?: string;
 }
 
 type EditorElement = HTMLElement & CodeEditorHandle;
 
 function createWrapper(tagName: string) {
   return forwardRef<CodeEditorHandle, CodeEditorProps>(function EditorWrapper(
-    { value, onChange, title, freeze, frozenLines, className, style },
+    { value, onChange, title, freeze, frozenLines, className, style, textSrc, autoCompletionSrc, highlightSrc, themeSrc },
     ref
   ) {
     const innerRef = useRef<EditorElement>(null);
@@ -30,6 +34,14 @@ function createWrapper(tagName: string) {
       setValue: (v: string) => innerRef.current?.setValue(v),
     }));
 
+    // Set initial value once after mount
+    useEffect(() => {
+      if (innerRef.current && value !== undefined) {
+        innerRef.current.setValue(value);
+      }
+    }, []);
+
+    // Handle subsequent value changes
     useEffect(() => {
       if (innerRef.current && value !== undefined) {
         const current = innerRef.current.getValue();
@@ -47,6 +59,19 @@ function createWrapper(tagName: string) {
       return () => el.removeEventListener('change', handler);
     }, [onChange]);
 
+    // Ensure frozenLines attribute is applied after the editor is ready
+    useEffect(() => {
+      const el = innerRef.current as HTMLElement | null;
+      if (!el || !frozenLines || frozenLines.length === 0) return;
+
+      const handler = () => {
+        el.setAttribute('frozenLines', frozenLines.join(','));
+      };
+
+      el.addEventListener('editor-ready', handler);
+      return () => el.removeEventListener('editor-ready', handler);
+    }, [frozenLines]);
+
     return React.createElement(tagName, {
       ref: innerRef,
       title,
@@ -54,6 +79,10 @@ function createWrapper(tagName: string) {
       frozenLines: frozenLines && frozenLines.length > 0 ? frozenLines.join(',') : undefined,
       class: className,
       style,
+      textSrc,
+      autoCompletionSrc,
+      highlightSrc,
+      themeSrc,
     });
   });
 }

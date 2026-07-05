@@ -1,4 +1,4 @@
-import CodeEditor from "../code-editor";
+import CodeEditor from "../../code-editor";
 
 import {java} from "@codemirror/lang-java";
 import labels from "./java-label.json";
