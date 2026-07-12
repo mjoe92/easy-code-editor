@@ -1,0 +1,1 @@
+<code-editor textSrc="import.js" frozenLines="1,2,5,14,17"></code-editor>

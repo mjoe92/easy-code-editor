@@ -1,1 +1,1 @@
-<code-editor textSrc="import.js"></code-editor>
+<code-editor textSrc="import.js" themeSrc="theme.json"></code-editor>
