@@ -4,6 +4,8 @@ import '../../../main';
 export interface CodeEditorHandle {
   getValue(): string;
   setValue(value: string): void;
+  updateThemeFrom?(url: string | null, dark?: boolean): void;
+  setEditorClass?(className: string | null): void;
 }
 
 interface CodeEditorProps {
@@ -32,6 +34,8 @@ function createWrapper(tagName: string) {
     useImperativeHandle(ref, () => ({
       getValue: () => innerRef.current?.getValue() ?? '',
       setValue: (v: string) => innerRef.current?.setValue(v),
+      updateThemeFrom: (url: string | null, dark?: boolean) => innerRef.current?.updateThemeFrom?.(url, dark),
+      setEditorClass: (className: string | null) => innerRef.current?.setEditorClass?.(className),
     }));
 
     // Set initial value once after mount

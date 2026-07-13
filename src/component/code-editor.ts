@@ -99,6 +99,8 @@ export default class CodeEditor extends HTMLElement {
       },
       annotations: [setProgrammatic.of(true)]
     });
+
+    this.applyFrozenLines();
   }
 
   public setEditorClass(className: string | null): void {
